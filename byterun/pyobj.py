@@ -236,38 +236,38 @@ class Frame(object):
         return line_num
 
 
-class Generator(object):
-    def __init__(self,
-                 g_frame: Frame,
-                 vm: "VirtualMachine"
-                 ) -> None:
-
-        assert type(g_frame) == Frame
-        assert type(vm).__name__ == "VirtualMachine"
-
-        self.gi_frame = g_frame
-        self.vm = vm
-        self.started = False
-        self.finished = False
-
-    def __iter__(self):
-        return self
-
-    def next(self) -> None:
-        return self.send()
-
-    def send(self, value: None = None) -> Union[int, Tuple[int, int, int], Any]:
-        assert value is None
-
-        if not self.started and value is not None:
-            raise TypeError("Can't send non-None value to a just-started generator")
-        self.gi_frame.stack.append(value)
-        self.started = True
-        val = self.vm.resume_frame(self.gi_frame)
-        if self.finished:
-            raise StopIteration(val)
-
-        # assert type(val) == int, (val, type(val))
-        return val
-
-    __next__ = next
+# class Generator(object):
+#     def __init__(self,
+#                  g_frame: Frame,
+#                  vm: "VirtualMachine"
+#                  ) -> None:
+#
+#         assert type(g_frame) == Frame
+#         assert type(vm).__name__ == "VirtualMachine"
+#
+#         self.gi_frame = g_frame
+#         self.vm = vm
+#         self.started = False
+#         self.finished = False
+#
+#     def __iter__(self):
+#         return self
+#
+#     def next(self) -> None:
+#         return self.send()
+#
+#     def send(self, value: None = None) -> Union[int, Tuple[int, int, int], Any]:
+#         assert value is None
+#
+#         if not self.started and value is not None:
+#             raise TypeError("Can't send non-None value to a just-started generator")
+#         self.gi_frame.stack.append(value)
+#         self.started = True
+#         val = self.vm.resume_frame(self.gi_frame)
+#         if self.finished:
+#             raise StopIteration(val)
+#
+#         # assert type(val) == int, (val, type(val))
+#         return val
+#
+#     __next__ = next
