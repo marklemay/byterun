@@ -83,13 +83,8 @@ class Function(object):
         frame = self._vm.make_frame(
             self.func_code, callargs, self.func_globals, {}
         )
-        CO_GENERATOR = 32  # flag for "this code uses yield"
-        if self.func_code.co_flags & CO_GENERATOR:
-            gen = Generator(frame, self._vm)
-            frame.generator = gen
-            retval = gen
-        else:
-            retval = self._vm.run_frame(frame)
+
+        retval = self._vm.run_frame(frame)
         return retval
 
 
