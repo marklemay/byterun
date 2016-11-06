@@ -4,20 +4,25 @@ import collections
 import inspect
 import types
 
-from typing import Dict, Any, NamedTuple, Optional
+from typing import Dict, Any, NamedTuple, Optional, List, Union, Tuple
 # import code as Code  # TODO: pretty sure this isn't the right thing....
 
 # from .pyvm2 import VirtualMachine
 
 import six
-# from byterun import pyvm2
 
-def make_cell(value):
+
+# TODO: why int?
+def make_cell(value: int) -> 'cell':
+    assert type(value) == int, (value, type(value))
     # Thanks to Alex Gaynor for help with this bit of twistiness.
     # Construct an actual cell object by creating a closure right here,
     # and grabbing the cell object out of the function we create.
     fn = (lambda x: lambda: x)(value)
-    return fn.__closure__[0]
+
+    c = fn.__closure__[0]
+    assert type(c).__name__ == "cell", (c, type(c))
+    return c
 
 
 class Function(object):
@@ -28,14 +33,19 @@ class Function(object):
         '_vm', '_func',
     ]
 
-    def __init__(self, name: str,
-                 code,
-                 globs,
-                 defaults,
+    def __init__(self,
+                 name: str,
+                 code: "code",
+                 globs: Dict[str, Any],
+                 defaults: List[Any],
                  closure,
-                 vm:"VirtualMachine") -> None:  # VirtualMachine):  #TODO: dumb language can't handle circular dependencies!!!!!!!
-        assert type(name)== str
-        # assert type(vm) == byterun.pyvm2.VirtualMachine, type(vm)
+                 vm: "VirtualMachine") -> None:  # TODO: dumb language can't handle circular dependencies!!!!!!!
+        assert type(name) == str
+        assert type(code).__name__ == "code"
+        assert (type(globs) == dict and all(type(key) == str for key in globs)), globs
+        assert type(defaults) == list, (defaults, type(defaults))
+        # assert closure is not None, ("hi",closure,type(closure)) # TODO: WFT?
+        assert type(vm).__name__ == "VirtualMachine"
 
         self._vm = vm
         self.func_code = code
@@ -84,12 +94,19 @@ class Function(object):
 
 
 class Method(object):
-    def __init__(self, obj, _class, func):
+    def __init__(self,
+                 obj,
+                 _class,
+                 func) -> None:
+
+        assert False  # , (obj,type(obj))
+
         self.im_self = obj
         self.im_class = _class
         self.im_func = func
 
     def __repr__(self):  # pragma: no cover
+        assert False
         name = "%s.%s" % (self.im_class.__name__, self.im_func.func_name)
         if self.im_self is not None:
             return '<Bound Method %s of %s>' % (name, self.im_self)
@@ -97,6 +114,7 @@ class Method(object):
             return '<Unbound Method %s>' % (name,)
 
     def __call__(self, *args, **kwargs):
+        assert False
         if self.im_self is not None:
             return self.im_func(self.im_self, *args, **kwargs)
         else:
@@ -123,26 +141,34 @@ class Cell(object):
 
     """
 
-    def __init__(self, value):
+    def __init__(self, value: Any) -> None:
         self.contents = value
 
-    def get(self):
+    def get(self) -> Any:
         return self.contents
 
-    def set(self, value):
+    def set(self, value: Any) -> None:
         self.contents = value
 
 
 Block = NamedTuple("Block", [('type', str), ('handler', Optional[int]), ('level', Any)])  # TODO: level ????
+
+
 # Block = collections.namedtuple("Block", "type, handler, level")
 
 
 class Frame(object):
     def __init__(self,
-                 f_code,  #: Code, TODO???
+                 f_code: "code",
                  f_globals: Dict[str, Any],
                  f_locals: Dict[str, Any],
-                 f_back) -> None:  # TODO: f_code is f_back?
+                 f_back: None
+                 ) -> None:  # TODO: f_code is f_back?
+
+        assert type(f_code).__name__ == "code"
+        assert (type(f_globals) == dict and all(type(key) == str for key in f_globals)), f_globals
+        assert (type(f_locals) == dict and all(type(key) == str for key in f_locals)), f_locals
+        assert f_back is not False, (f_back, type(f_back))
 
         self.f_code = f_code
         self.f_globals = f_globals
@@ -156,7 +182,7 @@ class Frame(object):
             if hasattr(self.f_builtins, '__dict__'):
                 self.f_builtins = self.f_builtins.__dict__
 
-        self.f_lineno = f_code.co_firstlineno
+        self.f_lineno = f_code.co_firstlineno  # TODO type!!!!
         self.f_lasti = 0  # type:int
         # TODO: i assume? TODO: but for real wtf is this
         if f_code.co_cellvars:
@@ -178,7 +204,7 @@ class Frame(object):
                 assert f_back.cells, "f_back.cells: %r" % (f_back.cells,)
                 self.cells[var] = f_back.cells[var]
 
-        self.block_stack = [] # TODO: what is this
+        self.block_stack = []  # TODO: what is this
         self.generator = None
 
     def __repr__(self):  # pragma: no cover
@@ -188,6 +214,9 @@ class Frame(object):
 
     def line_number(self):
         """Get the current line number the frame is executing."""
+
+        assert False
+
         # We don't keep f_lineno up to date, so calculate it based on the
         # instruction address and the line number table.
         lnotab = self.f_code.co_lnotab
@@ -207,7 +236,14 @@ class Frame(object):
 
 
 class Generator(object):
-    def __init__(self, g_frame, vm):
+    def __init__(self,
+                 g_frame: Frame,
+                 vm: "VirtualMachine"
+                 ) -> None:
+
+        assert type(g_frame) == Frame
+        assert type(vm).__name__ == "VirtualMachine"
+
         self.gi_frame = g_frame
         self.vm = vm
         self.started = False
@@ -216,10 +252,12 @@ class Generator(object):
     def __iter__(self):
         return self
 
-    def next(self):
-        return self.send(None)
+    def next(self) -> None:
+        return self.send()
 
-    def send(self, value=None):
+    def send(self, value: None = None) -> Union[int, Tuple[int, int, int], Any]:
+        assert value is None
+
         if not self.started and value is not None:
             raise TypeError("Can't send non-None value to a just-started generator")
         self.gi_frame.stack.append(value)
@@ -227,6 +265,8 @@ class Generator(object):
         val = self.vm.resume_frame(self.gi_frame)
         if self.finished:
             raise StopIteration(val)
+
+        # assert type(val) == int, (val, type(val))
         return val
 
     __next__ = next
