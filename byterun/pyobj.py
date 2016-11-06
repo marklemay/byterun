@@ -94,31 +94,32 @@ class Function(object):
 
 
 class Method(object):
-    def __init__(self,
-                 obj,
-                 _class,
-                 func) -> None:
-
-        assert False  # , (obj,type(obj))
-
-        self.im_self = obj
-        self.im_class = _class
-        self.im_func = func
-
-    def __repr__(self):  # pragma: no cover
-        assert False
-        name = "%s.%s" % (self.im_class.__name__, self.im_func.func_name)
-        if self.im_self is not None:
-            return '<Bound Method %s of %s>' % (name, self.im_self)
-        else:
-            return '<Unbound Method %s>' % (name,)
-
-    def __call__(self, *args, **kwargs):
-        assert False
-        if self.im_self is not None:
-            return self.im_func(self.im_self, *args, **kwargs)
-        else:
-            return self.im_func(*args, **kwargs)
+    pass
+    # def __init__(self,
+    #              obj,
+    #              _class,
+    #              func) -> None:
+    #
+    #     assert False  # , (obj,type(obj))
+    #
+    #     self.im_self = obj
+    #     self.im_class = _class
+    #     self.im_func = func
+    #
+    # def __repr__(self):  # pragma: no cover
+    #     assert False
+    #     name = "%s.%s" % (self.im_class.__name__, self.im_func.func_name)
+    #     if self.im_self is not None:
+    #         return '<Bound Method %s of %s>' % (name, self.im_self)
+    #     else:
+    #         return '<Unbound Method %s>' % (name,)
+    #
+    # def __call__(self, *args, **kwargs):
+    #     assert False
+    #     if self.im_self is not None:
+    #         return self.im_func(self.im_self, *args, **kwargs)
+    #     else:
+    #         return self.im_func(*args, **kwargs)
 
 
 class Cell(object):

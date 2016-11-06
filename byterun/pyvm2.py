@@ -681,11 +681,6 @@ class VirtualMachine(object):
         the_map[key] = val
 
     ## Printing
-
-    if 0:  # Only used in the interactive interpreter, not in modules.
-        def byte_PRINT_EXPR(self):
-            print(self.pop())
-
     def byte_PRINT_ITEM(self):
         item = self.pop()
         self.print_item(item)
@@ -1058,7 +1053,7 @@ class VirtualMachine(object):
 
     def byte_LOAD_BUILD_CLASS(self):
         # New in py3
-        self.push(__build_class__) #TODO: I bet this has to do with the class erors
+        self.push(__build_class__)  # TODO: I bet this has to do with the class erors
 
     def byte_STORE_LOCALS(self):
         self.frame.f_locals = self.pop()
