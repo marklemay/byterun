@@ -38,7 +38,7 @@ class VmTestCase(unittest.TestCase):
         code = compile(code, "<%s>" % self.id(), "exec", 0, 1)
 
         # Print the disassembly so we'll see it if the test fails.
-        dis_code(code)
+        # dis_code(code)
 
         real_stdout = sys.stdout
 
@@ -64,6 +64,7 @@ class VmTestCase(unittest.TestCase):
                 raise
             vm_exc = e
         finally:
+            vm_stdout.flush()
             real_stdout.write("-- stdout ----------\n")
             real_stdout.write(vm_stdout.getvalue())
 
@@ -83,7 +84,7 @@ class VmTestCase(unittest.TestCase):
 
         sys.stdout = real_stdout
 
-        self.assert_same_exception(vm_exc, py_exc)
+        # self.assert_same_exception(vm_exc, py_exc) #TODO: redo
         self.assertEqual(vm_stdout.getvalue(), py_stdout.getvalue())
         self.assertEqual(vm_value, py_value)
         if raises:
@@ -93,6 +94,5 @@ class VmTestCase(unittest.TestCase):
 
     def assert_same_exception(self, e1, e2):
         """Exceptions don't implement __eq__, check it ourselves."""
-        # self.assertEqual(str(e1), str(e2))
-        # self.assertIs(type(e1), type(e2))
-        pass
+        self.assertEqual(str(e1), str(e2))
+        self.assertIs(type(e1), type(e2))

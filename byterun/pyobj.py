@@ -4,20 +4,20 @@ import collections
 import inspect
 import types
 
+from typing import Dict, Any, NamedTuple, Optional
+# import code as Code  # TODO: pretty sure this isn't the right thing....
+
+# from .pyvm2 import VirtualMachine
+
 import six
-
-PY3, PY2 = six.PY3, not six.PY3
-
+# from byterun import pyvm2
 
 def make_cell(value):
     # Thanks to Alex Gaynor for help with this bit of twistiness.
     # Construct an actual cell object by creating a closure right here,
     # and grabbing the cell object out of the function we create.
     fn = (lambda x: lambda: x)(value)
-    if PY3:
-        return fn.__closure__[0]
-    else:
-        return fn.func_closure[0]
+    return fn.__closure__[0]
 
 
 class Function(object):
@@ -28,7 +28,15 @@ class Function(object):
         '_vm', '_func',
     ]
 
-    def __init__(self, name, code, globs, defaults, closure, vm):
+    def __init__(self, name: str,
+                 code,
+                 globs,
+                 defaults,
+                 closure,
+                 vm:"VirtualMachine") -> None:  # VirtualMachine):  #TODO: dumb language can't handle circular dependencies!!!!!!!
+        assert type(name)== str
+        # assert type(vm) == byterun.pyvm2.VirtualMachine, type(vm)
+
         self._vm = vm
         self.func_code = code
         self.func_name = self.__name__ = name or code.co_name
@@ -47,7 +55,7 @@ class Function(object):
             kw['closure'] = tuple(make_cell(0) for _ in closure)
         self._func = types.FunctionType(code, globs, **kw)
 
-    def __repr__(self):         # pragma: no cover
+    def __repr__(self):  # pragma: no cover
         return '<Function %s at 0x%08x>' % (
             self.func_name, id(self)
         )
@@ -55,25 +63,17 @@ class Function(object):
     def __get__(self, instance, owner):
         if instance is not None:
             return Method(instance, owner, self)
-        if PY2:
-            return Method(None, owner, self)
-        else:
-            return self
+
+        return self
 
     def __call__(self, *args, **kwargs):
-        if PY2 and self.func_name in ["<setcomp>", "<dictcomp>", "<genexpr>"]:
-            # D'oh! http://bugs.python.org/issue19611 Py2 doesn't know how to
-            # inspect set comprehensions, dict comprehensions, or generator
-            # expressions properly.  They are always functions of one argument,
-            # so just do the right thing.
-            assert len(args) == 1 and not kwargs, "Surprising comprehension!"
-            callargs = {".0": args[0]}
-        else:
-            callargs = inspect.getcallargs(self._func, *args, **kwargs)
+
+        callargs = inspect.getcallargs(self._func, *args, **kwargs)
+
         frame = self._vm.make_frame(
             self.func_code, callargs, self.func_globals, {}
         )
-        CO_GENERATOR = 32           # flag for "this code uses yield"
+        CO_GENERATOR = 32  # flag for "this code uses yield"
         if self.func_code.co_flags & CO_GENERATOR:
             gen = Generator(frame, self._vm)
             frame.generator = gen
@@ -82,13 +82,14 @@ class Function(object):
             retval = self._vm.run_frame(frame)
         return retval
 
+
 class Method(object):
     def __init__(self, obj, _class, func):
         self.im_self = obj
         self.im_class = _class
         self.im_func = func
 
-    def __repr__(self):         # pragma: no cover
+    def __repr__(self):  # pragma: no cover
         name = "%s.%s" % (self.im_class.__name__, self.im_func.func_name)
         if self.im_self is not None:
             return '<Bound Method %s of %s>' % (name, self.im_self)
@@ -121,6 +122,7 @@ class Cell(object):
            actual value.
 
     """
+
     def __init__(self, value):
         self.contents = value
 
@@ -131,17 +133,23 @@ class Cell(object):
         self.contents = value
 
 
-Block = collections.namedtuple("Block", "type, handler, level")
+Block = NamedTuple("Block", [('type', str), ('handler', Optional[int]), ('level', Any)])  # TODO: level ????
+# Block = collections.namedtuple("Block", "type, handler, level")
 
 
 class Frame(object):
-    def __init__(self, f_code, f_globals, f_locals, f_back):
+    def __init__(self,
+                 f_code,  #: Code, TODO???
+                 f_globals: Dict[str, Any],
+                 f_locals: Dict[str, Any],
+                 f_back) -> None:  # TODO: f_code is f_back?
+
         self.f_code = f_code
         self.f_globals = f_globals
         self.f_locals = f_locals
         self.f_back = f_back
-        self.stack = []
-        if f_back:
+        self.stack = []  # TODO: what is this GD type?
+        if f_back:  # TODO: what? also why?
             self.f_builtins = f_back.f_builtins
         else:
             self.f_builtins = f_locals['__builtins__']
@@ -149,8 +157,8 @@ class Frame(object):
                 self.f_builtins = self.f_builtins.__dict__
 
         self.f_lineno = f_code.co_firstlineno
-        self.f_lasti = 0
-
+        self.f_lasti = 0  # type:int
+        # TODO: i assume? TODO: but for real wtf is this
         if f_code.co_cellvars:
             self.cells = {}
             if not f_back.cells:
@@ -170,10 +178,10 @@ class Frame(object):
                 assert f_back.cells, "f_back.cells: %r" % (f_back.cells,)
                 self.cells[var] = f_back.cells[var]
 
-        self.block_stack = []
+        self.block_stack = [] # TODO: what is this
         self.generator = None
 
-    def __repr__(self):         # pragma: no cover
+    def __repr__(self):  # pragma: no cover
         return '<Frame at 0x%08x: %r @ %d>' % (
             id(self), self.f_code.co_filename, self.f_lineno
         )

@@ -1,0 +1,9 @@
+lots of unsupported callable
+dictionary
+list comprehensions
+fix class handling in the interperter
+fix the exception changes
+fix with statement
+
+
+TODO: something like mypy to infer the types from the test suite?
