@@ -209,8 +209,8 @@ class TestClosures(vmtest.VmTestCase):
             """)
 
 
-class TestGenerators(vmtest.VmTestCase):
-    pass
+# class TestGenerators(vmtest.VmTestCase):
+#     pass
     # def test_first(self):
     #     self.assert_ok("""\
     #         def two():
