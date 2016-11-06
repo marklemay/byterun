@@ -954,8 +954,18 @@ class VirtualMachine(object):
         args, kwargs = self.popn(2)
         return self.call_function(arg, args, kwargs)
 
-    def call_function(self, arg, args, kwargs):
-        lenKw, lenPos = divmod(arg, 256)
+    def call_function(self,
+                      arg: int,
+                      args: List, # TODO: delete
+                      kwargs: Dict, # TODO: delete
+                      ) -> None:
+
+        assert type(arg) == int
+        assert type(args) == list and not args, (args,type(args))
+        assert type(kwargs) == dict and not kwargs, (kwargs,type(kwargs))
+
+
+        lenKw, lenPos = divmod(arg, 256)  # type: (int,int)
         namedargs = {}
         for i in range(lenKw):
             key, val = self.popn(2)
@@ -990,56 +1000,11 @@ class VirtualMachine(object):
             self.frame.generator.finished = True
         return "return"
 
-    def byte_YIELD_VALUE(self):
-        self.return_value = self.pop()
-        return "yield"
-
-    def byte_YIELD_FROM(self):
-        u = self.pop()
-        x = self.top()
-
-        try:
-            if not isinstance(x, Generator) or u is None:
-                # Call next on iterators.
-                retval = next(x)
-            else:
-                retval = x.send(u)
-            self.return_value = retval
-        except StopIteration as e:
-            self.pop()
-            self.push(e.value)
-        else:
-            # YIELD_FROM decrements f_lasti, so that it will be called
-            # repeatedly until a StopIteration is raised.
-            self.jump(self.frame.f_lasti - 1)
-            # Returning "yield" prevents the block stack cleanup code
-            # from executing, suspending the frame in its current state.
-            return "yield"
-
-    ## Importing
-
-    def byte_IMPORT_NAME(self, name):
-        raise NotImplementedError()
-
-    def byte_IMPORT_STAR(self):
-        raise NotImplementedError()
-
-    def byte_IMPORT_FROM(self, name):
-        raise NotImplementedError()
-
     ## And the rest...
 
     def byte_EXEC_STMT(self):
         stmt, globs, locs = self.popn(3)
         six.exec_(stmt, globs, locs)
 
-    def byte_LOAD_BUILD_CLASS(self):
-        # New in py3
-        self.push(__build_class__)  # TODO: I bet this has to do with the class erors
-
     def byte_STORE_LOCALS(self):
         self.frame.f_locals = self.pop()
-
-    if 0:  # Not in py2.7
-        def byte_SET_LINENO(self, lineno):
-            self.frame.f_lineno = lineno
