@@ -32,7 +32,7 @@ from typing import Optional, Dict, Any, Tuple, Iterable, Union, List
 import six
 from six.moves import reprlib
 
-from .pyobj import Frame, Block, Method, Function
+from .pyobj import Frame, Block, Function
 
 log = logging.getLogger(__name__)
 
@@ -930,23 +930,14 @@ class VirtualMachine(object):
         code = self.pop()
         defaults = self.popn(argc)
         globs = self.frame.f_globals
-        fn = Function(name, code, globs, defaults, None, self)
+        fn = Function(name, code, globs, defaults, self)
         self.push(fn)
 
     def byte_LOAD_CLOSURE(self, name):
-        self.push(self.frame.cells[name])
+        raise NotImplementedError()
 
     def byte_MAKE_CLOSURE(self, argc):
-        # if PY3:
-        # TODO: the py3 docs don't mention this change.
-        name = self.pop()
-        # else:
-        #     name = None
-        closure, code = self.popn(2)
-        defaults = self.popn(argc)
-        globs = self.frame.f_globals
-        fn = Function(name, code, globs, defaults, closure, self)
-        self.push(fn)
+        raise NotImplementedError()
 
     def byte_CALL_FUNCTION(self, arg):
         return self.call_function(arg, [], {})
