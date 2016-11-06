@@ -32,7 +32,7 @@ from typing import Optional, Dict, Any, Tuple, Iterable, Union, List
 import six
 from six.moves import reprlib
 
-from .pyobj import Frame, Block, Method, Function# , Generator
+from .pyobj import Frame, Block, Method, Function
 
 log = logging.getLogger(__name__)
 
