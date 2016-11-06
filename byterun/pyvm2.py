@@ -1019,22 +1019,13 @@ class VirtualMachine(object):
     ## Importing
 
     def byte_IMPORT_NAME(self, name):
-        level, fromlist = self.popn(2)
-        frame = self.frame
-        self.push(
-            __import__(name, frame.f_globals, frame.f_locals, fromlist, level)
-        )
+        raise NotImplementedError()
 
     def byte_IMPORT_STAR(self):
-        # TODO: this doesn't use __all__ properly.
-        mod = self.pop()
-        for attr in dir(mod):
-            if attr[0] != '_':
-                self.frame.f_locals[attr] = getattr(mod, attr)
+        raise NotImplementedError()
 
     def byte_IMPORT_FROM(self, name):
-        mod = self.top()
-        self.push(getattr(mod, name))
+        raise NotImplementedError()
 
     ## And the rest...
 
