@@ -181,14 +181,6 @@ class TestIt(vmtest.VmTestCase):
             print(hasattr(l, "foo"))
             """)
 
-    def test_deleting_names(self):
-        self.assert_ok("""
-            g = 17
-            assert g == 17
-            del g
-            g
-            """, raises=NameError)
-
     def test_deleting_local_names(self):
         self.assert_ok("""
             def f():

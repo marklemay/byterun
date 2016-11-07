@@ -416,22 +416,11 @@ class VirtualMachine(object):
     def byte_POP_TOP(self):
         self.pop()
 
-
-    def byte_ROT_TWO(self):
-        a, b = self.popn(2)
-        self.push(b, a)
-
-    def byte_ROT_THREE(self):
-        a, b, c = self.popn(3)
-        self.push(c, a, b)
-
-    def byte_ROT_FOUR(self):
-        a, b, c, d = self.popn(4)
-        self.push(d, a, b, c)
-
     ## Names
 
-    def byte_LOAD_NAME(self, name):
+    def byte_LOAD_NAME(self, name: str) -> None:
+        assert type(name) == str
+
         frame = self.frame
         if name in frame.f_locals:
             val = frame.f_locals[name]
@@ -443,11 +432,9 @@ class VirtualMachine(object):
             raise NameError("name '%s' is not defined" % name)
         self.push(val)
 
-    def byte_STORE_NAME(self, name):
+    def byte_STORE_NAME(self, name: str) -> None:
+        assert type(name) == str
         self.frame.f_locals[name] = self.pop()
-
-    def byte_DELETE_NAME(self, name):
-        del self.frame.f_locals[name]
 
     def byte_LOAD_FAST(self, name):
         if name in self.frame.f_locals:
