@@ -464,71 +464,69 @@ class VirtualMachine(object):
             raise NameError("global name '%s' is not defined" % name)
         self.push(val)
 
-    def byte_LOAD_DEREF(self, name):
-        self.push(self.frame.cells[name].get())
-
-    def byte_STORE_DEREF(self, name):
-        self.frame.cells[name].set(self.pop())
-
-    def byte_LOAD_LOCALS(self):
-        self.push(self.frame.f_locals)
-
     ## Operators
 
     UNARY_OPERATORS = {
-        'POSITIVE': operator.pos,
-        'NEGATIVE': operator.neg,
+        # 'POSITIVE': operator.pos,
+        # 'NEGATIVE': operator.neg,
         'NOT': operator.not_,
-        'CONVERT': repr,
-        'INVERT': operator.invert,
+        # 'CONVERT': repr,
+        # 'INVERT': operator.invert,
     }
 
-    def unaryOperator(self, op):
+    # TODO:
+    def unaryOperator(self, op: str) -> None:
+        assert type(op) == str, op
+
         x = self.pop()
         self.push(self.UNARY_OPERATORS[op](x))
 
     BINARY_OPERATORS = {
-        'POWER': pow,
-        'MULTIPLY': operator.mul,
-        'DIVIDE': getattr(operator, 'div', lambda x, y: None),
-        'FLOOR_DIVIDE': operator.floordiv,
-        'TRUE_DIVIDE': operator.truediv,
-        'MODULO': operator.mod,
-        'ADD': operator.add,
-        'SUBTRACT': operator.sub,
-        'SUBSCR': operator.getitem,
-        'LSHIFT': operator.lshift,
-        'RSHIFT': operator.rshift,
+        # 'POWER': pow,
+        # 'MULTIPLY': operator.mul,
+        # 'DIVIDE': getattr(operator, 'div', lambda x, y: None),
+        # 'FLOOR_DIVIDE': operator.floordiv,
+        # 'TRUE_DIVIDE': operator.truediv,
+        # 'MODULO': operator.mod,
+        # 'ADD': operator.add,
+        # 'SUBTRACT': operator.sub,
+        # 'SUBSCR': operator.getitem,
+        # 'LSHIFT': operator.lshift,
+        # 'RSHIFT': operator.rshift,
         'AND': operator.and_,
         'XOR': operator.xor,
         'OR': operator.or_,
     }
 
-    def binaryOperator(self, op):
+    def binaryOperator(self, op: str) -> None:
+        assert type(op) == str, op
+
         x, y = self.popn(2)
         self.push(self.BINARY_OPERATORS[op](x, y))
 
-    def inplaceOperator(self, op):
+    def inplaceOperator(self, op: str) -> None:
+        assert type(op) == str, op
+
         x, y = self.popn(2)
-        if op == 'POWER':
-            x **= y
-        elif op == 'MULTIPLY':
-            x *= y
-        elif op in ['DIVIDE', 'FLOOR_DIVIDE']:
-            x //= y
-        elif op == 'TRUE_DIVIDE':
-            x /= y
-        elif op == 'MODULO':
-            x %= y
-        elif op == 'ADD':
-            x += y
-        elif op == 'SUBTRACT':
-            x -= y
-        elif op == 'LSHIFT':
-            x <<= y
-        elif op == 'RSHIFT':
-            x >>= y
-        elif op == 'AND':
+        # if op == 'POWER':
+        #     x **= y
+        # elif op == 'MULTIPLY':
+        #     x *= y
+        # elif op in ['DIVIDE', 'FLOOR_DIVIDE']:
+        #     x //= y
+        # elif op == 'TRUE_DIVIDE':
+        #     x /= y
+        # elif op == 'MODULO':
+        #     x %= y
+        # elif op == 'ADD':
+        #     x += y
+        # elif op == 'SUBTRACT':
+        #     x -= y
+        # elif op == 'LSHIFT':
+        #     x <<= y
+        # elif op == 'RSHIFT':
+        #     x >>= y
+        if op == 'AND':
             x &= y
         elif op == 'XOR':
             x ^= y
@@ -537,27 +535,6 @@ class VirtualMachine(object):
         else:  # pragma: no cover
             raise VirtualMachineError("Unknown in-place operator: %r" % op)
         self.push(x)
-
-    def sliceOperator(self, op):
-        start = 0
-        end = None  # we will take this to mean end
-        op, count = op[:-2], int(op[-1])
-        if count == 1:
-            start = self.pop()
-        elif count == 2:
-            end = self.pop()
-        elif count == 3:
-            end = self.pop()
-            start = self.pop()
-        l = self.pop()
-        if end is None:
-            end = len(l)
-        if op.startswith('STORE_'):
-            l[start:end] = self.pop()
-        elif op.startswith('DELETE_'):
-            del l[start:end]
-        else:
-            self.push(l[start:end])
 
     COMPARE_OPERATORS = [
         operator.lt,
@@ -573,9 +550,16 @@ class VirtualMachine(object):
         lambda x, y: issubclass(x, Exception) and issubclass(x, y),
     ]
 
-    def byte_COMPARE_OP(self, opnum):
+    def byte_COMPARE_OP(self, opnum: int) -> None:
+        assert type(opnum) == int, opnum
         x, y = self.popn(2)
-        self.push(self.COMPARE_OPERATORS[opnum](x, y))
+
+        if opnum == 2:
+            self.push(x == y)
+        elif opnum == 3:
+            self.push(x != y)
+        else:
+            assert False
 
     ## Attributes and indexing
 
