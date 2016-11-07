@@ -519,26 +519,6 @@ class VirtualMachine(object):
         else:
             assert False
 
-    ## Printing
-
-    # NEED TO KEEP THIS AROUND so testing can happen, becuase there's no way to get stuff out eval
-
-    def byte_PRINT_ITEM(self) -> None:
-        item = self.pop()
-        self.print_item(item)
-
-    def byte_PRINT_ITEM_TO(self) -> None:
-        to = self.pop()
-        item = self.pop()
-        self.print_item(item, to)
-
-    def byte_PRINT_NEWLINE(self) -> None:
-        self.print_newline()
-
-    def byte_PRINT_NEWLINE_TO(self) -> None:
-        to = self.pop()
-        self.print_newline(to)
-
     ## Jumps
 
     # def byte_JUMP_FORWARD(self, jump:int) -> None:
@@ -575,39 +555,6 @@ class VirtualMachine(object):
             self.jump(jump)
         else:
             self.pop()
-
-    ## Blocks
-
-    def byte_SETUP_LOOP(self, dest):
-        self.push_block('loop', dest)
-
-    def byte_GET_ITER(self):
-        self.push(iter(self.pop()))
-
-    def byte_FOR_ITER(self, jump):
-        iterobj = self.top()
-        try:
-            v = next(iterobj)
-            self.push(v)
-        except StopIteration:
-            self.pop()
-            self.jump(jump)
-
-    def byte_BREAK_LOOP(self):
-        return 'break'
-
-    def byte_CONTINUE_LOOP(self, dest):
-        # This is a trick with the return value.
-        # While unrolling blocks, continue and return both have to preserve
-        # state as the finally blocks are executed.  For continue, it's
-        # where to jump to, for return, it's the value to return.  It gets
-        # pushed on the stack for both, so continue puts the jump destination
-        # into return_value.
-        self.return_value = dest
-        return 'continue'
-
-    def byte_POP_BLOCK(self):
-        self.pop_block()
 
     ## Functions
 
@@ -659,3 +606,23 @@ class VirtualMachine(object):
 
     def byte_STORE_LOCALS(self):
         self.frame.f_locals = self.pop()
+
+    ## Printing
+
+    # NEED TO KEEP THIS AROUND so testing can happen, becuase there's no way to get stuff out eval
+
+    def byte_PRINT_ITEM(self) -> None:
+        item = self.pop()
+        self.print_item(item)
+
+    def byte_PRINT_ITEM_TO(self) -> None:
+        to = self.pop()
+        item = self.pop()
+        self.print_item(item, to)
+
+    def byte_PRINT_NEWLINE(self) -> None:
+        self.print_newline()
+
+    def byte_PRINT_NEWLINE_TO(self) -> None:
+        to = self.pop()
+        self.print_newline(to)

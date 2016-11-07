@@ -53,21 +53,3 @@ class TestIt(vmtest.VmTestCase):
             assert f(0) == 'foo'
             assert f(1) == 'bar'
             """)
-
-
-class TestLoops(vmtest.VmTestCase):
-    def test_for(self):
-        self.assert_ok("""
-            for i in range(10):
-                print(i)
-            print("done")
-            """)
-
-    def test_break(self):
-        self.assert_ok("""
-            for i in range(10):
-                print(i)
-                if i == 7:
-                    break
-            print("done")
-            """)
