@@ -24,7 +24,7 @@ import logging
 import operator
 import sys
 
-from typing import Optional, Dict, Any, Tuple, Iterable, Union, List
+from typing import Optional, Dict, Any, Tuple, Iterable, Union, List, Callable
 # import range_iterator
 
 # import code as Code
@@ -869,128 +869,40 @@ class VirtualMachine(object):
             raise Exception("popped block is not an except handler")
         self.unwind_block(block)
 
-    def byte_SETUP_WITH(self, dest):
-        ctxmgr = self.pop()
-        self.push(ctxmgr.__exit__)
-        ctxmgr_obj = ctxmgr.__enter__()
-        # if PY2:
-        #     self.push_block('with', dest)
-        # elif PY3:
-        self.push_block('finally', dest)
-        self.push(ctxmgr_obj)
-
-    def byte_WITH_CLEANUP(self):
-        # The code here does some weird stack manipulation: the exit function
-        # is buried in the stack, and where depends on what's on top of it.
-        # Pull out the exit function, and leave the rest in place.
-        v = w = None
-        u = self.top()
-        if u is None:
-            exit_func = self.pop(1)
-        elif isinstance(u, str):
-            if u in ('return', 'continue'):
-                exit_func = self.pop(2)
-            else:
-                exit_func = self.pop(1)
-            u = None
-        elif issubclass(u, BaseException):
-            # if PY2:
-            #     w, v, u = self.popn(3)
-            #     exit_func = self.pop()
-            #     self.push(w, v, u)
-            # elif PY3:
-            w, v, u = self.popn(3)
-            tp, exc, tb = self.popn(3)
-            exit_func = self.pop()
-            self.push(tp, exc, tb)
-            self.push(None)
-            self.push(w, v, u)
-            block = self.pop_block()
-            assert block.type == 'except-handler'
-            self.push_block(block.type, block.handler, block.level - 1)
-        else:  # pragma: no cover
-            raise VirtualMachineError("Confused WITH_CLEANUP")
-        exit_ret = exit_func(u, v, w)
-        err = (u is not None) and bool(exit_ret)
-        if err:
-            # An error occurred, and was suppressed
-            # if PY2:
-            #     self.popn(3)
-            #     self.push(None)
-            # elif PY3:
-            self.push('silenced')
 
     ## Functions
 
-    def byte_MAKE_FUNCTION(self, argc):
-        # if PY3:
-        name = self.pop()
-        # else:
-        #     name = None
-        code = self.pop()
-        defaults = self.popn(argc)
+    def byte_MAKE_FUNCTION(self, argc: int) -> None:
+        assert type(argc) == int
+
+        name = self.pop()  # type: str
+        assert type(name) == str
+
+        code = self.pop()  # type: code
+        # assert type(code) == str,code
+
+        defaults = self.popn(argc)  # type: List
+        assert type(defaults) == list, (defaults, type(defaults))
+
         globs = self.frame.f_globals
+        assert type(globs) == dict
+
         fn = Function(name, code, globs, defaults, self)
         self.push(fn)
 
-    def byte_LOAD_CLOSURE(self, name):
-        raise NotImplementedError()
-
-    def byte_MAKE_CLOSURE(self, argc):
-        raise NotImplementedError()
-
-    def byte_CALL_FUNCTION(self, arg):
-        return self.call_function(arg, [], {})
-
-    def byte_CALL_FUNCTION_VAR(self, arg):
-        args = self.pop()
-        return self.call_function(arg, args, {})
-
-    def byte_CALL_FUNCTION_KW(self, arg):
-        kwargs = self.pop()
-        return self.call_function(arg, [], kwargs)
-
-    def byte_CALL_FUNCTION_VAR_KW(self, arg):
-        args, kwargs = self.popn(2)
-        return self.call_function(arg, args, kwargs)
-
-    def call_function(self,
-                      arg: int,
-                      args: List, # TODO: delete
-                      kwargs: Dict, # TODO: delete
-                      ) -> None:
-
+    def byte_CALL_FUNCTION(self, arg: int) -> None:
         assert type(arg) == int
-        assert type(args) == list and not args, (args,type(args))
-        assert type(kwargs) == dict and not kwargs, (kwargs,type(kwargs))
-
 
         lenKw, lenPos = divmod(arg, 256)  # type: (int,int)
         namedargs = {}
         for i in range(lenKw):
             key, val = self.popn(2)
             namedargs[key] = val
-        namedargs.update(kwargs)
         posargs = self.popn(lenPos)
-        posargs.extend(args)
 
-        func = self.pop()
-        frame = self.frame
-        if hasattr(func, 'im_func'):
-            # Methods get self as an implicit first parameter.
-            if func.im_self:
-                posargs.insert(0, func.im_self)
-            # The first parameter must be the correct type.
-            if not isinstance(posargs[0], func.im_class):
-                raise TypeError(
-                    'unbound method %s() must be called with %s instance '
-                    'as first argument (got %s instance instead)' % (
-                        func.im_func.func_name,
-                        func.im_class.__name__,
-                        type(posargs[0]).__name__,
-                    )
-                )
-            func = func.im_func
+        func = self.pop()  # type: Callable
+        # assert type(func) == Function,func
+
         retval = func(*posargs, **namedargs)
         self.push(retval)
 
