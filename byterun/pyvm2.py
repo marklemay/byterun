@@ -436,7 +436,9 @@ class VirtualMachine(object):
         assert type(name) == str
         self.frame.f_locals[name] = self.pop()
 
-    def byte_LOAD_FAST(self, name):
+    def byte_LOAD_FAST(self, name: str) -> None:
+        assert type(name) == str
+
         if name in self.frame.f_locals:
             val = self.frame.f_locals[name]
         else:
@@ -445,11 +447,11 @@ class VirtualMachine(object):
             )
         self.push(val)
 
-    def byte_STORE_FAST(self, name):
+    def byte_STORE_FAST(self, name: str) -> None:
+        assert type(name) == str
+
         self.frame.f_locals[name] = self.pop()
 
-    def byte_DELETE_FAST(self, name):
-        del self.frame.f_locals[name]
 
     def byte_LOAD_GLOBAL(self, name):
         f = self.frame

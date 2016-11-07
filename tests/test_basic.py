@@ -181,16 +181,6 @@ class TestIt(vmtest.VmTestCase):
             print(hasattr(l, "foo"))
             """)
 
-    def test_deleting_local_names(self):
-        self.assert_ok("""
-            def f():
-                l = 23
-                assert l == 23
-                del l
-                l
-            f()
-            """, raises=NameError)
-
     def test_callback(self):
         self.assert_ok("""
             def lcase(s):
