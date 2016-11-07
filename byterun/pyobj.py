@@ -51,11 +51,6 @@ class Function(object):
             self.func_name, id(self)
         )
 
-    def __get__(self, instance, owner):
-        if instance is not None:
-            return Method(instance, owner, self)
-
-        return self
 
     def __call__(self, *args, **kwargs):
 
@@ -69,7 +64,7 @@ class Function(object):
         return retval
 
 
-Block = NamedTuple("Block", [('type', str), ('handler', Optional[int]), ('level', Any)])  # TODO: level ????
+Block = NamedTuple("Block", [('type', str), ('handler', Optional[int]), ('level', int)])
 
 
 class Frame(object):
