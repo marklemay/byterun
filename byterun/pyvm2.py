@@ -416,9 +416,6 @@ class VirtualMachine(object):
     def byte_POP_TOP(self):
         self.pop()
 
-    def byte_DUP_TOP(self):
-        self.push(self.top())
-
     def byte_DUP_TOPX(self, count):
         items = self.popn(count)
         for i in [1, 2]:
@@ -724,17 +721,6 @@ class VirtualMachine(object):
     def byte_JUMP_ABSOLUTE(self, jump):
         self.jump(jump)
 
-    if 0:  # Not in py2.7
-        def byte_JUMP_IF_TRUE(self, jump):
-            val = self.top()
-            if val:
-                self.jump(jump)
-
-        def byte_JUMP_IF_FALSE(self, jump):
-            val = self.top()
-            if not val:
-                self.jump(jump)
-
     def byte_POP_JUMP_IF_TRUE(self, jump):
         val = self.pop()
         if val:
@@ -791,7 +777,6 @@ class VirtualMachine(object):
 
     def byte_POP_BLOCK(self):
         self.pop_block()
-
 
     ## Functions
 

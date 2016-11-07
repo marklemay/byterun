@@ -200,13 +200,6 @@ class TestIt(vmtest.VmTestCase):
             print(hasattr(l, "foo"))
             """)
 
-    def test_attribute_inplace_ops(self):
-        self.assert_ok("""
-            l = lambda: 1   # Just to have an object...
-            l.foo = 17
-            l.foo -= 3
-            print(l.foo)
-            """)
 
     def test_deleting_names(self):
         self.assert_ok("""
