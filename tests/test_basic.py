@@ -166,25 +166,6 @@ class TestIt(vmtest.VmTestCase):
             print(l)
             """)
 
-
-    def test_strange_sequence_ops(self):
-        # from stdlib: test/test_augassign.py
-        self.assert_ok("""
-            x = [1,2]
-            x += [3,4]
-            x *= 2
-
-            assert x == [1, 2, 3, 4, 1, 2, 3, 4]
-
-            x = [1, 2, 3]
-            y = x
-            x[1:2] *= 2
-            y[1:2] += [1]
-
-            assert x == [1, 2, 1, 2, 3]
-            assert x is y
-            """)
-
     def test_unary_operators(self):
         self.assert_ok("""
             x = 8
@@ -199,7 +180,6 @@ class TestIt(vmtest.VmTestCase):
             del l.foo
             print(hasattr(l, "foo"))
             """)
-
 
     def test_deleting_names(self):
         self.assert_ok("""
@@ -301,7 +281,6 @@ class TestLoops(vmtest.VmTestCase):
                 print(i)
             print("done")
             """)
-
 
 
 class TestComparisons(vmtest.VmTestCase):

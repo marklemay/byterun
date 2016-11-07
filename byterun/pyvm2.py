@@ -416,15 +416,6 @@ class VirtualMachine(object):
     def byte_POP_TOP(self):
         self.pop()
 
-    def byte_DUP_TOPX(self, count):
-        items = self.popn(count)
-        for i in [1, 2]:
-            self.push(*items)
-
-    def byte_DUP_TOP_TWO(self):
-        # Py3 only
-        a, b = self.popn(2)
-        self.push(a, b, a, b)
 
     def byte_ROT_TWO(self):
         a, b = self.popn(2)
