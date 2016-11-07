@@ -17,87 +17,12 @@ class TestIt(vmtest.VmTestCase):
         print("bye")
         """)
 
-    def test_slice_assignment(self):
-        self.assert_ok("""
-            l = list(range(10))
-            l[3:8] = ["x"]
-            print(l)
-            """)
-        self.assert_ok("""
-            l = list(range(10))
-            l[:8] = ["x"]
-            print(l)
-            """)
-        self.assert_ok("""
-            l = list(range(10))
-            l[3:] = ["x"]
-            print(l)
-            """)
-        self.assert_ok("""
-            l = list(range(10))
-            l[:] = ["x"]
-            print(l)
-            """)
-
-    def test_slice_deletion(self):
-        self.assert_ok("""
-            l = list(range(10))
-            del l[3:8]
-            print(l)
-            """)
-        self.assert_ok("""
-            l = list(range(10))
-            del l[:8]
-            print(l)
-            """)
-        self.assert_ok("""
-            l = list(range(10))
-            del l[3:]
-            print(l)
-            """)
-        self.assert_ok("""
-            l = list(range(10))
-            del l[:]
-            print(l)
-            """)
-        self.assert_ok("""
-            l = list(range(10))
-            del l[::2]
-            print(l)
-            """)
-
     def test_unary_operators(self):
         self.assert_ok("""
             x = 8
             print(not x)
             """)
 
-    def test_attributes(self):
-        self.assert_ok("""
-            l = lambda: 1   # Just to have an object...
-            l.foo = 17
-            print(hasattr(l, "foo"), l.foo)
-            del l.foo
-            print(hasattr(l, "foo"))
-            """)
-
-    def test_callback(self):
-        self.assert_ok("""
-            def lcase(s):
-                return s.lower()
-            l = ["xyz", "ABC"]
-            l.sort(key=lcase)
-            print(l)
-            assert l == ["ABC", "xyz"]
-            """)
-
-    def test_unpacking(self):
-        self.assert_ok("""
-            a, b, c = (1, 2, 3)
-            assert a == 1
-            assert b == 2
-            assert c == 3
-            """)
 
     def test_jump_if_true_or_pop(self):
         self.assert_ok("""

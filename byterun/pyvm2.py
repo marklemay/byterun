@@ -482,17 +482,6 @@ class VirtualMachine(object):
         self.push(self.UNARY_OPERATORS[op](x))
 
     BINARY_OPERATORS = {
-        # 'POWER': pow,
-        # 'MULTIPLY': operator.mul,
-        # 'DIVIDE': getattr(operator, 'div', lambda x, y: None),
-        # 'FLOOR_DIVIDE': operator.floordiv,
-        # 'TRUE_DIVIDE': operator.truediv,
-        # 'MODULO': operator.mod,
-        # 'ADD': operator.add,
-        # 'SUBTRACT': operator.sub,
-        # 'SUBSCR': operator.getitem,
-        # 'LSHIFT': operator.lshift,
-        # 'RSHIFT': operator.rshift,
         'AND': operator.and_,
         'XOR': operator.xor,
         'OR': operator.or_,
@@ -508,24 +497,6 @@ class VirtualMachine(object):
         assert type(op) == str, op
 
         x, y = self.popn(2)
-        # if op == 'POWER':
-        #     x **= y
-        # elif op == 'MULTIPLY':
-        #     x *= y
-        # elif op in ['DIVIDE', 'FLOOR_DIVIDE']:
-        #     x //= y
-        # elif op == 'TRUE_DIVIDE':
-        #     x /= y
-        # elif op == 'MODULO':
-        #     x %= y
-        # elif op == 'ADD':
-        #     x += y
-        # elif op == 'SUBTRACT':
-        #     x -= y
-        # elif op == 'LSHIFT':
-        #     x <<= y
-        # elif op == 'RSHIFT':
-        #     x >>= y
         if op == 'AND':
             x &= y
         elif op == 'XOR':
@@ -536,22 +507,9 @@ class VirtualMachine(object):
             raise VirtualMachineError("Unknown in-place operator: %r" % op)
         self.push(x)
 
-    COMPARE_OPERATORS = [
-        operator.lt,
-        operator.le,
-        operator.eq,
-        operator.ne,
-        operator.gt,
-        operator.ge,
-        lambda x, y: x in y,  # TODO: sort of cheating
-        lambda x, y: x not in y,
-        lambda x, y: x is y,
-        lambda x, y: x is not y,
-        lambda x, y: issubclass(x, Exception) and issubclass(x, y),
-    ]
-
     def byte_COMPARE_OP(self, opnum: int) -> None:
         assert type(opnum) == int, opnum
+
         x, y = self.popn(2)
 
         if opnum == 2:
@@ -561,145 +519,57 @@ class VirtualMachine(object):
         else:
             assert False
 
-    ## Attributes and indexing
-
-    def byte_LOAD_ATTR(self, attr):
-        obj = self.pop()
-        val = getattr(obj, attr)
-        self.push(val)
-
-    def byte_STORE_ATTR(self, name):
-        val, obj = self.popn(2)
-        setattr(obj, name, val)
-
-    def byte_DELETE_ATTR(self, name):
-        obj = self.pop()
-        delattr(obj, name)
-
-    def byte_STORE_SUBSCR(self):
-        val, obj, subscr = self.popn(3)
-        obj[subscr] = val
-
-    def byte_DELETE_SUBSCR(self):
-        obj, subscr = self.popn(2)
-        del obj[subscr]
-
-    ## Building
-
-    def byte_BUILD_TUPLE(self, count):
-        elts = self.popn(count)
-        self.push(tuple(elts))
-
-    def byte_BUILD_LIST(self, count):
-        elts = self.popn(count)
-        self.push(elts)
-
-    def byte_BUILD_SET(self, count):
-        # Not documented in Py2 docs.
-        elts = self.popn(count)
-        self.push(set(elts))
-
-    def byte_BUILD_MAP(self, size):
-        # size is ignored.
-        self.push({})
-
-    def byte_STORE_MAP(self):
-        the_map, val, key = self.popn(3)
-        the_map[key] = val
-        self.push(the_map)
-
-    def byte_UNPACK_SEQUENCE(self, count):
-        seq = self.pop()
-        for x in reversed(seq):
-            self.push(x)
-
-    def byte_BUILD_SLICE(self, count):
-        if count == 2:
-            x, y = self.popn(2)
-            self.push(slice(x, y))
-        elif count == 3:
-            x, y, z = self.popn(3)
-            self.push(slice(x, y, z))
-        else:  # pragma: no cover
-            raise VirtualMachineError("Strange BUILD_SLICE count: %r" % count)
-
-    def byte_LIST_APPEND(self, count):
-        val = self.pop()
-        the_list = self.peek(count)
-        the_list.append(val)
-
-    def byte_SET_ADD(self, count):
-        val = self.pop()
-        the_set = self.peek(count)
-        the_set.add(val)
-
-    def byte_MAP_ADD(self, count):
-        val, key = self.popn(2)
-        the_map = self.peek(count)
-        the_map[key] = val
-
     ## Printing
-    def byte_PRINT_ITEM(self):
+
+    # NEED TO KEEP THIS AROUND so testing can happen, becuase there's no way to get stuff out eval
+
+    def byte_PRINT_ITEM(self) -> None:
         item = self.pop()
         self.print_item(item)
 
-    def byte_PRINT_ITEM_TO(self):
+    def byte_PRINT_ITEM_TO(self) -> None:
         to = self.pop()
         item = self.pop()
         self.print_item(item, to)
 
-    def byte_PRINT_NEWLINE(self):
+    def byte_PRINT_NEWLINE(self) -> None:
         self.print_newline()
 
-    def byte_PRINT_NEWLINE_TO(self):
+    def byte_PRINT_NEWLINE_TO(self) -> None:
         to = self.pop()
         self.print_newline(to)
 
-    def print_item(self, item, to=None):
-        if to is None:
-            to = sys.stdout
-        if to.softspace:
-            print(" ", end="", file=to)
-            to.softspace = 0
-        print(item, end="", file=to)
-        if isinstance(item, str):
-            if (not item) or (not item[-1].isspace()) or (item[-1] == " "):
-                to.softspace = 1
-        else:
-            to.softspace = 1
-
-    def print_newline(self, to=None):
-        if to is None:
-            to = sys.stdout
-        print("", file=to)
-        to.softspace = 0
-
     ## Jumps
 
-    def byte_JUMP_FORWARD(self, jump):
+    # def byte_JUMP_FORWARD(self, jump:int) -> None:
+    #     self.jump(jump)
+
+    def byte_JUMP_ABSOLUTE(self, jump: int) -> None:
+        assert type(jump) == int, jump
         self.jump(jump)
 
-    def byte_JUMP_ABSOLUTE(self, jump):
-        self.jump(jump)
-
-    def byte_POP_JUMP_IF_TRUE(self, jump):
+    def byte_POP_JUMP_IF_TRUE(self, jump: int) -> None:
+        assert type(jump) == int, jump
         val = self.pop()
         if val:
             self.jump(jump)
 
-    def byte_POP_JUMP_IF_FALSE(self, jump):
+    def byte_POP_JUMP_IF_FALSE(self, jump: int) -> None:
+        assert type(jump) == int, jump
         val = self.pop()
         if not val:
             self.jump(jump)
 
-    def byte_JUMP_IF_TRUE_OR_POP(self, jump):
+    def byte_JUMP_IF_TRUE_OR_POP(self, jump: int) -> None:
+        assert type(jump) == int, jump
         val = self.top()
         if val:
             self.jump(jump)
         else:
             self.pop()
 
-    def byte_JUMP_IF_FALSE_OR_POP(self, jump):
+    def byte_JUMP_IF_FALSE_OR_POP(self, jump: int) -> None:
+        assert type(jump) == int, jump
         val = self.top()
         if not val:
             self.jump(jump)
