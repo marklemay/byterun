@@ -789,85 +789,8 @@ class VirtualMachine(object):
         self.return_value = dest
         return 'continue'
 
-    def byte_SETUP_EXCEPT(self, dest):
-        self.push_block('setup-except', dest)
-
-    def byte_SETUP_FINALLY(self, dest):
-        self.push_block('finally', dest)
-
-    def byte_END_FINALLY(self):
-        v = self.pop()
-        if isinstance(v, str):
-            why = v
-            if why in ('return', 'continue'):
-                self.return_value = self.pop()
-            if why == 'silenced':  # PY3
-                block = self.pop_block()
-                assert block.type == 'except-handler'
-                self.unwind_block(block)
-                why = None
-        elif v is None:
-            why = None
-        elif issubclass(v, BaseException):
-            exctype = v
-            val = self.pop()
-            tb = self.pop()
-            self.last_exception = (exctype, val, tb)
-            why = 'reraise'
-        else:  # pragma: no cover
-            raise VirtualMachineError("Confused END_FINALLY")
-        return why
-
     def byte_POP_BLOCK(self):
         self.pop_block()
-
-    def byte_RAISE_VARARGS(self, argc):
-        cause = exc = None
-        if argc == 2:
-            cause = self.pop()
-            exc = self.pop()
-        elif argc == 1:
-            exc = self.pop()
-        return self.do_raise(exc, cause)
-
-    def do_raise(self, exc, cause):
-        if exc is None:  # reraise
-            exc_type, val, tb = self.last_exception
-            if exc_type is None:
-                return 'exception'  # error
-            else:
-                return 'reraise'
-
-        elif type(exc) == type:
-            # As in `raise ValueError`
-            exc_type = exc
-            val = exc()  # Make an instance.
-        elif isinstance(exc, BaseException):
-            # As in `raise ValueError('foo')`
-            exc_type = type(exc)
-            val = exc
-        else:
-            return 'exception'  # error
-
-        # If you reach this point, you're guaranteed that
-        # val is a valid exception instance and exc_type is its class.
-        # Now do a similar thing for the cause, if present.
-        if cause:
-            if type(cause) == type:
-                cause = cause()
-            elif not isinstance(cause, BaseException):
-                return 'exception'  # error
-
-            val.__cause__ = cause
-
-        self.last_exception = exc_type, val, val.__traceback__
-        return 'exception'
-
-    def byte_POP_EXCEPT(self):
-        block = self.pop_block()
-        if block.type != 'except-handler':
-            raise Exception("popped block is not an except handler")
-        self.unwind_block(block)
 
 
     ## Functions

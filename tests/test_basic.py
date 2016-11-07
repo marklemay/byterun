@@ -309,29 +309,6 @@ class TestLoops(vmtest.VmTestCase):
             print("done")
             """)
 
-    def test_continue_in_try_except(self):
-        self.assert_ok("""
-            for i in range(10):
-                try:
-                    if i % 3 == 0:
-                        continue
-                    print(i)
-                except ValueError:
-                    pass
-            print("done")
-            """)
-
-    def test_continue_in_try_finally(self):
-        self.assert_ok("""
-            for i in range(10):
-                try:
-                    if i % 3 == 0:
-                        continue
-                    print(i)
-                finally:
-                    print(".")
-            print("done")
-            """)
 
 
 class TestComparisons(vmtest.VmTestCase):
