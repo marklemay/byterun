@@ -233,17 +233,12 @@ class VirtualMachine(object):
         arg = None
         arguments = []
         if byteCode >= dis.HAVE_ARGUMENT:
+
             arg = f.f_code.co_code[f.f_lasti:f.f_lasti + 2]
             f.f_lasti += 2
             intArg = arg[0] + (arg[1] << 8)
             if byteCode in dis.hasconst:
                 arg = f.f_code.co_consts[intArg]
-            elif byteCode in dis.hasfree:
-                if intArg < len(f.f_code.co_cellvars):
-                    arg = f.f_code.co_cellvars[intArg]
-                else:
-                    var_idx = intArg - len(f.f_code.co_cellvars)
-                    arg = f.f_code.co_freevars[var_idx]
             elif byteCode in dis.hasname:
                 arg = f.f_code.co_names[intArg]
             elif byteCode in dis.hasjrel:

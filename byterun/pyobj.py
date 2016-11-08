@@ -42,8 +42,6 @@ class Function(object):
         kw = {
             'argdefs': self.func_defaults,
         }
-        # if closure:
-        #     kw['closure'] = tuple(make_cell(0) for _ in closure)
         self._func = types.FunctionType(code, globs, **kw)
 
     def __repr__(self):  # pragma: no cover
@@ -94,25 +92,6 @@ class Frame(object):
 
         self.f_lineno = f_code.co_firstlineno  # TODO type!!!!
         self.f_lasti = 0  # type:int
-        # TODO: i assume? TODO: but for real wtf is this
-        if f_code.co_cellvars:
-            self.cells = {}
-            if not f_back.cells:
-                f_back.cells = {}
-            for var in f_code.co_cellvars:
-                # Make a cell for the variable in our locals, or None.
-                cell = Cell(self.f_locals.get(var))
-                f_back.cells[var] = self.cells[var] = cell
-        else:
-            self.cells = None
-
-        if f_code.co_freevars:
-            if not self.cells:
-                self.cells = {}
-            for var in f_code.co_freevars:
-                assert self.cells is not None
-                assert f_back.cells, "f_back.cells: %r" % (f_back.cells,)
-                self.cells[var] = f_back.cells[var]
 
         self.block_stack = []  # TODO: what is this
         self.generator = None

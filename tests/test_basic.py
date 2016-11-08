@@ -28,9 +28,9 @@ class TestIt(vmtest.VmTestCase):
         self.assert_ok("""
             def f(a, b):
                 return a or b
-            assert f(17, 0) == 17
-            assert f(0, 23) == 23
-            assert f(0, "") == ""
+            print( f(17, 0) == 17)
+            print( f(0, 23) == 23)
+            print( f(0, "") == "")
             """)
 
     def test_jump_if_false_or_pop(self):
@@ -50,6 +50,6 @@ class TestIt(vmtest.VmTestCase):
                     return 'foo'
                 else:
                     return 'bar'
-            assert f(0) == 'foo'
-            assert f(1) == 'bar'
+            print( f(0) == 'foo')
+            print( f(1) == 'bar')
             """)
