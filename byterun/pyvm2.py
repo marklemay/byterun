@@ -256,9 +256,7 @@ class VirtualMachine(object):
     # TODO: see usage!
     def run_frame(self, frame: Frame) -> Any:  # can return anything!!!
         """Run a frame until it returns (somehow).
-
         Exceptions are raised, the return value is returned.
-
         """
         assert type(frame) == Frame
         self.push_frame(frame)
@@ -313,7 +311,7 @@ class VirtualMachine(object):
             val = frame.f_locals[name]
         elif name in frame.f_globals:
             val = frame.f_globals[name]
-        elif name in frame.f_builtins:
+        elif name in frame.f_builtins:  # need this for print!
             val = frame.f_builtins[name]
         else:
             raise NameError("name '%s' is not defined" % name)
@@ -380,20 +378,6 @@ class VirtualMachine(object):
         x, y = self.popn(2)
         self.push(self.BINARY_OPERATORS[op](x, y))
 
-    def inplaceOperator(self, op: str) -> None:
-        assert type(op) == str, op
-
-        x, y = self.popn(2)
-        if op == 'AND':
-            x &= y
-        elif op == 'XOR':
-            x ^= y
-        elif op == 'OR':
-            x |= y
-        else:  # pragma: no cover
-            raise VirtualMachineError("Unknown in-place operator: %r" % op)
-        self.push(x)
-
     def byte_COMPARE_OP(self, opnum: int) -> None:
         assert type(opnum) == int, opnum
 
@@ -406,25 +390,12 @@ class VirtualMachine(object):
         else:
             assert False
 
-    ## Jumps
-
-    # def byte_JUMP_FORWARD(self, jump:int) -> None:
-    #     self.jump(jump)
-
-    def byte_JUMP_ABSOLUTE(self, jump: int) -> None:
-        assert type(jump) == int, jump
-        self.jump(jump)
+    ## Jumps #TODO: more jumps
 
     def byte_POP_JUMP_IF_TRUE(self, jump: int) -> None:
         assert type(jump) == int, jump
         val = self.pop()
         if val:
-            self.jump(jump)
-
-    def byte_POP_JUMP_IF_FALSE(self, jump: int) -> None:
-        assert type(jump) == int, jump
-        val = self.pop()
-        if not val:
             self.jump(jump)
 
     def byte_JUMP_IF_TRUE_OR_POP(self, jump: int) -> None:
@@ -486,13 +457,6 @@ class VirtualMachine(object):
         return "return"
 
     ## And the rest...
-
-    def byte_EXEC_STMT(self):
-        stmt, globs, locs = self.popn(3)
-        six.exec_(stmt, globs, locs)
-
-    def byte_STORE_LOCALS(self):
-        self.frame.f_locals = self.pop()
 
     ## Printing
 
