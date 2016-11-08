@@ -9,6 +9,8 @@ import six
 class TestIt(vmtest.VmTestCase):
     def test_constant(self):
         self.assert_ok("17")
+    def test_notnotnot(self):
+        self.assert_ok("print(not not not True)")
 
     def test_multi_print(self):
         self.assert_ok("""

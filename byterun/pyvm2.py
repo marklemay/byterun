@@ -226,29 +226,23 @@ class VirtualMachine(object):
         assert type(arguments) == list, (arguments, type(arguments))
 
         why = None  # type: Optional[str]
-        try:
-            if byteName.startswith('UNARY_'):
-                self.unaryOperator(byteName[6:])
-            elif byteName.startswith('BINARY_'):
-                self.binaryOperator(byteName[7:])
-            elif byteName.startswith('INPLACE_'):
-                self.inplaceOperator(byteName[8:])
-            elif 'SLICE+' in byteName:
-                self.sliceOperator(byteName)
-            else:
-                # dispatch
-                bytecode_fn = getattr(self, 'byte_%s' % byteName, None)
-                if not bytecode_fn:  # pragma: no cover
-                    raise VirtualMachineError(
-                        "unknown bytecode type: %s" % byteName
-                    )
-                why = bytecode_fn(*arguments)
 
-        except:
-            # deal with exceptions encountered while executing the op.
-            self.last_exception = sys.exc_info()[:2] + (None,)
-            log.exception("Caught exception during execution")
-            why = 'exception'
+        if byteName.startswith('UNARY_'):
+            self.unaryOperator(byteName[6:])
+        elif byteName.startswith('BINARY_'):
+            self.binaryOperator(byteName[7:])
+        elif byteName.startswith('INPLACE_'):
+            self.inplaceOperator(byteName[8:])
+        else:
+            # dispatch
+            bytecode_fn = getattr(self, 'byte_%s' % byteName, None)
+            if not bytecode_fn:  # pragma: no cover
+                raise VirtualMachineError(
+                    "unknown bytecode type: %s" % byteName
+                )
+            why = bytecode_fn(*arguments)
+
+        # except: TODO: no exceptions yet
 
         assert why is None or type(why) == str, (why, type(why))
         return why
@@ -268,12 +262,6 @@ class VirtualMachine(object):
             # When unwinding the block stack, we need to keep track of why we
             # are doing it.
             why = self.dispatch(byteName, arguments)
-            if why == 'exception':
-                # TODO: ceval calls PyTraceBack_Here, not sure what that does.
-                pass
-
-            if why == 'reraise':
-                why = 'exception'
 
             if why != 'yield':
                 while why and frame.block_stack:
@@ -286,9 +274,6 @@ class VirtualMachine(object):
         # TODO: handle generator exception state
 
         self.pop_frame()
-
-        if why == 'exception':
-            six.reraise(*self.last_exception)
 
         # assert self.return_value is None, (self.return_value, type(self.return_value))
         return self.return_value
@@ -351,20 +336,15 @@ class VirtualMachine(object):
 
     ## Operators
 
-    UNARY_OPERATORS = {
-        # 'POSITIVE': operator.pos,
-        # 'NEGATIVE': operator.neg,
-        'NOT': operator.not_,
-        # 'CONVERT': repr,
-        # 'INVERT': operator.invert,
-    }
-
     # TODO:
     def unaryOperator(self, op: str) -> None:
         assert type(op) == str, op
 
         x = self.pop()
-        self.push(self.UNARY_OPERATORS[op](x))
+        if op == "NOT":
+            self.push(not x)
+        else:
+            raise NameError("op '%s' is not defined" % op)
 
     BINARY_OPERATORS = {
         'AND': operator.and_,
@@ -461,19 +441,3 @@ class VirtualMachine(object):
     ## Printing
 
     # NEED TO KEEP THIS AROUND so testing can happen, becuase there's no way to get stuff out eval
-
-    def byte_PRINT_ITEM(self) -> None:
-        item = self.pop()
-        self.print_item(item)
-
-    def byte_PRINT_ITEM_TO(self) -> None:
-        to = self.pop()
-        item = self.pop()
-        self.print_item(item, to)
-
-    def byte_PRINT_NEWLINE(self) -> None:
-        self.print_newline()
-
-    def byte_PRINT_NEWLINE_TO(self) -> None:
-        to = self.pop()
-        self.print_newline(to)
