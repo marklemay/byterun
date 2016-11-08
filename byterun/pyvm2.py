@@ -81,7 +81,6 @@ class VirtualMachine(object):
         """Pop a number of values from the value stack.
 
         A list of `n` values is returned, the deepest value first.
-
         """
         assert type(n) == int
 
@@ -91,11 +90,6 @@ class VirtualMachine(object):
             return ret
         else:
             return []
-
-    def peek(self, n: int) -> Any:
-        """Get a value `n` entries down in the stack, without changing the stack."""
-        assert type(n) == int
-        return self.frame.stack[-n]
 
     def jump(self, jump: int) -> None:
         """Move the bytecode pointer to `jump`, so it will execute next."""
@@ -162,7 +156,6 @@ class VirtualMachine(object):
         assert val is None, (val, type(val))
         return val
 
-
     def parse_byte_and_args(self) -> Tuple[str, Any, int]:  # TODO: code in the middle of that
         """ Parse 1 - 3 bytes of bytecode into
         an instruction and optionally arguments."""
@@ -177,10 +170,8 @@ class VirtualMachine(object):
         arguments = []
 
         if byteCode >= dis.HAVE_ARGUMENT:
-            arg = f.f_code.co_code[f.f_lasti:f.f_lasti + 2]
+            arg, f.f_lasti = f.f_code.co_code[f.f_lasti:f.f_lasti + 2], f.f_lasti + 2
             assert type(arg) == bytes, type(arg)
-
-            f.f_lasti += 2
 
             intArg = arg[0] + (arg[1] << 8)
             if byteCode in dis.hasconst:
@@ -231,7 +222,6 @@ class VirtualMachine(object):
                  ) -> Optional[str]:
         """ Dispatch by bytename to the corresponding methods.
         Exceptions are caught and set on the virtual machine."""
-
         assert type(byteName) == str, (byteName, type(byteName))
         assert type(arguments) == list, (arguments, type(arguments))
 
@@ -261,50 +251,6 @@ class VirtualMachine(object):
             why = 'exception'
 
         assert why is None or type(why) == str, (why, type(why))
-        return why
-
-    def manage_block_stack(self,
-                           why: str
-                           ) -> Optional[str]:
-        """ Manage a frame's block stack.
-        Manipulate the block stack and data stack for looping,
-        exception handling, or returning."""
-
-        assert type(why) == str, (why, type(why))
-
-        assert why != 'yield'
-
-        block = self.frame.block_stack[-1]
-        if block.type == 'loop' and why == 'continue':
-            self.jump(self.return_value)
-            return None
-
-        self.pop_block()
-        self.unwind_block(block)
-
-        if block.type == 'loop' and why == 'break':
-            self.jump(block.handler)
-            return None
-
-        if (
-                        why == 'exception' and
-                        block.type in ['setup-except', 'finally']
-        ):
-            self.push_block('except-handler')
-            exctype, value, tb = self.last_exception
-            self.push(tb, value, exctype)
-            # PyErr_Normalize_Exception goes here
-            self.push(tb, value, exctype)
-            self.jump(block.handler)
-            return None
-
-        elif block.type == 'finally':
-            if why in ('return', 'continue'):
-                self.push(self.return_value)
-            self.push(why)
-            self.jump(block.handler)
-            return None
-
         return why
 
     # TODO: see usage!
