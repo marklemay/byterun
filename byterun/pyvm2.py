@@ -32,7 +32,7 @@ from typing import Optional, Dict, Any, Tuple, Iterable, Union, List, Callable
 import six
 from six.moves import reprlib
 
-from .pyobj import Frame, Block, Function
+from .pyobj import Frame, Function
 
 log = logging.getLogger(__name__)
 
@@ -66,7 +66,6 @@ class VirtualMachine(object):
 
         Default to the top of the stack, but `i` can be a count from the top
         instead.
-
         """
         assert type(i) == int
         return self.frame.stack.pop(-1 - i)
@@ -84,7 +83,6 @@ class VirtualMachine(object):
         A list of `n` values is returned, the deepest value first.
 
         """
-
         assert type(n) == int
 
         if n:
@@ -104,25 +102,6 @@ class VirtualMachine(object):
         assert type(jump) == int
 
         self.frame.f_lasti = jump
-
-    def push_block(self,
-                   type_: str,
-                   handler: Optional[int] = None,
-                   level: None = None
-                   ) -> None:
-        assert type(type_) == str, type(type_)
-        assert handler == None or type(handler) == int, handler
-        assert level == None, level
-
-        if level is None:
-            level = len(self.frame.stack)
-        self.frame.block_stack.append(Block(type_, handler, level))
-
-    def pop_block(self) -> Block:
-        poped = self.frame.block_stack.pop()
-        assert type(poped) == Block
-
-        return poped
 
     def make_frame(self,
                    code,  #: TODO: what is the type that compile returns
@@ -164,23 +143,11 @@ class VirtualMachine(object):
         else:
             self.frame = None
 
-
-    def resume_frame(self, frame: Frame) -> Union[int, Any]:  # TODO: should be able to do better with out type
-        assert type(frame) == Frame
-
-        frame.f_back = self.frame
-        val = self.run_frame(frame)
-        frame.f_back = None
-
-        # assert type(val) == int, "almost always int"
-        return val
-
     def run_code(self,
                  code,  #: Code, ????
                  f_globals: Optional[Dict[str, Any]] = None,
                  f_locals: Optional[Dict[str, Any]] = None
                  ) -> None:  # does't seem right, but whatevs?
-
         assert f_globals is None or (type(f_globals) == dict and all(type(key) == str for key in f_globals))
         assert f_locals is None or (type(f_locals) == dict and all(type(key) == str for key in f_locals))
 
@@ -195,20 +162,6 @@ class VirtualMachine(object):
         assert val is None, (val, type(val))
         return val
 
-    def unwind_block(self, block: Block) -> None:
-        assert type(block) == Block
-
-        if block.type == 'except-handler':
-            offset = 3
-        else:
-            offset = 0
-
-        while len(self.frame.stack) > block.level + offset:
-            self.pop()
-
-        if block.type == 'except-handler':
-            tb, value, exctype = self.popn(3)
-            self.last_exception = exctype, value, tb
 
     def parse_byte_and_args(self) -> Tuple[str, Any, int]:  # TODO: code in the middle of that
         """ Parse 1 - 3 bytes of bytecode into
@@ -228,7 +181,6 @@ class VirtualMachine(object):
             assert type(arg) == bytes, type(arg)
 
             f.f_lasti += 2
-
 
             intArg = arg[0] + (arg[1] << 8)
             if byteCode in dis.hasconst:

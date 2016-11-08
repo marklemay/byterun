@@ -7,7 +7,6 @@ import types
 from typing import Dict, Any, NamedTuple, Optional, List, Union, Tuple
 
 
-
 class Function(object):
     __slots__ = [
         'func_code', 'func_name', 'func_defaults', 'func_globals',
@@ -49,9 +48,7 @@ class Function(object):
             self.func_name, id(self)
         )
 
-
     def __call__(self, *args, **kwargs):
-
         callargs = inspect.getcallargs(self._func, *args, **kwargs)
 
         frame = self._vm.make_frame(
@@ -60,9 +57,6 @@ class Function(object):
 
         retval = self._vm.run_frame(frame)
         return retval
-
-
-Block = NamedTuple("Block", [('type', str), ('handler', Optional[int]), ('level', int)])
 
 
 class Frame(object):
@@ -92,10 +86,8 @@ class Frame(object):
 
         self.f_lineno = f_code.co_firstlineno  # TODO type!!!!
 
-        #TODO: akward, hide behind a better interface
+        # TODO: akward, hide behind a better interface
         self.f_lasti = 0  # type:int
 
         self.block_stack = []  # TODO: what is this
         self.generator = None
-
-
