@@ -91,6 +91,8 @@ class Frame(object):
                 self.f_builtins = self.f_builtins.__dict__
 
         self.f_lineno = f_code.co_firstlineno  # TODO type!!!!
+
+        #TODO: akward, hide behind a better interface
         self.f_lasti = 0  # type:int
 
         self.block_stack = []  # TODO: what is this

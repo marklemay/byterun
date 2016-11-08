@@ -164,18 +164,6 @@ class VirtualMachine(object):
         else:
             self.frame = None
 
-    def print_frames(self) -> None:
-        """Print the call stack, for debugging."""
-        for f in self.frames:
-            filename = f.f_code.co_filename
-            lineno = f.line_number()
-            print('  File "%s", line %d, in %s' % (
-                filename, lineno, f.f_code.co_name
-            ))
-            linecache.checkcache(filename)
-            line = linecache.getline(filename, lineno, f.f_globals)
-            if line:
-                print('    ' + line.strip())
 
     def resume_frame(self, frame: Frame) -> Union[int, Any]:  # TODO: should be able to do better with out type
         assert type(frame) == Frame
@@ -228,14 +216,20 @@ class VirtualMachine(object):
         f = self.frame
         opoffset = f.f_lasti
         byteCode = f.f_code.co_code[opoffset]  # type: int
+        assert type(byteCode) == int
+
         f.f_lasti += 1
         byteName = dis.opname[byteCode]
-        arg = None
+        arg = None  # type: Optional[bytes]
         arguments = []
-        if byteCode >= dis.HAVE_ARGUMENT:
 
+        if byteCode >= dis.HAVE_ARGUMENT:
             arg = f.f_code.co_code[f.f_lasti:f.f_lasti + 2]
+            assert type(arg) == bytes, type(arg)
+
             f.f_lasti += 2
+
+
             intArg = arg[0] + (arg[1] << 8)
             if byteCode in dis.hasconst:
                 arg = f.f_code.co_consts[intArg]
